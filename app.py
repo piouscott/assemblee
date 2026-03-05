@@ -583,6 +583,20 @@ def page_impact_social(scrutins: pd.DataFrame, votes: pd.DataFrame):
         "On regarde ensuite quel parti vote POUR chaque type de mesure."
     )
 
+    with st.expander("Definitions : Progressif / Restrictif / Neutre"):
+        st.markdown("""
+| Categorie | Definition | Exemples de mots-cles detectes |
+|-----------|-----------|-------------------------------|
+| **Progressif** | Etend des droits, augmente des aides, renforce des protections | *visant a proteger, revalorisation, pouvoir d'achat, acces aux soins, justice sociale, solidarite, droit fondamental* |
+| **Restrictif** | Reduit des droits, durcit des conditions, coupe des aides | *durcir, reduction deficit, maitrise depense, surveillance, flexibilite travail, rationalisation* |
+| **Neutre** | Aucun signal clair dans le titre ni dans l'expose | Textes techniques, proceduraux, ou dont le contenu est trop ambigu |
+
+**Methode** : classification automatique par mots-cles dans le titre du scrutin et l'expose des motifs de l'amendement (2 signaux textuels). Le groupe politique de l'auteur n'est **pas** utilise comme signal, pour eviter un biais circulaire. Pour les amendements, le nom de la loi parente est retire du titre avant analyse.
+
+**Confiance** : *haute* (2 signaux concordants), *moyenne* (2 signaux divergents, expose priorise), *basse* (1 seul signal).
+""")
+
+
     # Filtre par groupe auteur de l'amendement
     if "amdt_groupe_abrege" in scrutins.columns:
         groupes_auteur = sorted(scrutins["amdt_groupe_abrege"].dropna().replace("", pd.NA).dropna().unique())
@@ -791,6 +805,34 @@ def page_economie(scrutins: pd.DataFrame, votes: pd.DataFrame):
         "**Austerite** (reduction deficit). On analyse ensuite quel parti vote POUR chaque type."
     )
 
+    with st.expander("Definitions : doctrines economiques et classes sociales"):
+        st.markdown("""
+#### Doctrines economiques
+
+| Doctrine | Definition | Exemples de mots-cles detectes |
+|----------|-----------|-------------------------------|
+| **Liberal** | Favorise le marche libre, reduit l'intervention de l'Etat | *privatisation, liberalisation, dereglementation, ouverture a la concurrence, libre-echange, suppression de taxe, defiscalisation* |
+| **Interventionniste** | Renforce le role de l'Etat dans l'economie | *nationalisation, regulation, service public, encadrement des prix, planification, taxe sur les superprofits, suppression d'exonerations fiscales* |
+| **Social** | Vise la redistribution et la protection sociale | *pouvoir d'achat, revalorisation du SMIC, allocation chomage, protection locataire, minima sociaux, justice sociale, solidarite* |
+| **Austerite** | Priorise l'equilibre budgetaire et la reduction de la dette | *maitrise des depenses, reduction du deficit, discipline budgetaire, economies, trajectoire des finances publiques* |
+| **Mixte** | Signaux de plusieurs doctrines a force egale | Textes touchant a la fois au marche et a la protection sociale |
+| **Non economique** | Aucun signal economique detecte | Textes sur la securite, l'immigration, la sante non-economique, etc. |
+
+#### Classes sociales visees
+
+| Classe | Population concernee | Exemples de mots-cles |
+|--------|---------------------|----------------------|
+| **Populaires** | Menages modestes, precaires, travailleurs pauvres | *precaire, chomeur, bas salaire, RSA, sans-abri, handicap, CDD* |
+| **Moyennes** | Classes moyennes, PME, independants | *PME, artisan, commercant, profession liberale, auto-entrepreneur* |
+| **Aisees/Entreprises** | Hauts revenus, grandes entreprises | *multinationale, actionnaire, fortune, haut revenu, superprofits* |
+| **Universel** | Ensemble de la population | *tous les citoyens, universalite, egalite des droits, bien commun* |
+
+#### Limites connues
+- Les termes fiscaux (*baisse d'impot*, *suppression de taxe*) sont **bidirectionnels** : utilises autant par la gauche (baisser les impots des menages) que par la droite (baisser l'impot sur les societes). Un bruit residuel subsiste dans la categorie Liberal.
+- Le nom de la loi parente est retire du titre des amendements avant classification, pour eviter que tous les amendements d'une meme loi heritent de sa doctrine.
+""")
+
+
     ordre_partis = ["LFI-NFP", "GDR", "EcoS", "SOC", "LIOT", "Dem", "EPR", "HOR", "AD", "UDR", "DR", "RN"]
 
     # Filtre par groupe auteur de l'amendement
@@ -872,6 +914,18 @@ def page_economie(scrutins: pd.DataFrame, votes: pd.DataFrame):
         "Les scores sont **normalises par scrutin** (deviation par rapport a la moyenne de la chambre) "
         "pour neutraliser le biais majorite/opposition."
     )
+
+    with st.expander("Comment lire ces graphiques ?"):
+        st.markdown("""
+**Score pro-populaire** : pour chaque scrutin, on determine si la position de chaque parti est favorable aux classes populaires :
+- Texte **Progressif** (etendre des droits, augmenter des aides) : voter **POUR** = pro-populaire
+- Texte **Restrictif** (couper des aides, durcir) : voter **CONTRE** = pro-populaire
+
+**Normalisation par scrutin** : on soustrait la moyenne de la chambre pour chaque scrutin. Cela neutralise le biais ou la majorite vote CONTRE tous les amendements d'opposition, quel que soit le contenu. Un score de +10 signifie que le parti prend 10 points de plus de positions pro-populaires que la moyenne.
+
+**Heatmap** : decompose le score par classe sociale visee.
+Par exemple, sur la colonne *Aisees/Entreprises*, un score vert signifie que le parti vote plus que la moyenne pour taxer/reguler les riches. Sur la colonne *Populaires*, un score vert signifie que le parti soutient plus les mesures ciblant les classes populaires.
+""")
 
     # Filtrer les scrutins avec classe_sociale et impact determines
     votes_croises = votes[
